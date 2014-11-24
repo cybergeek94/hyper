@@ -74,6 +74,8 @@ impl<R: Reader> Reader for HttpReader<R> {
                 }
             },
             ChunkedReader(ref mut body, ref mut opt_remaining) => {
+                debug!("Current remaining={}", opt_remaining);
+
                 let mut rem = match *opt_remaining {
                     Some(ref rem) => *rem,
                     // None means we don't know the size of the next chunk
@@ -82,6 +84,8 @@ impl<R: Reader> Reader for HttpReader<R> {
                 debug!("Chunked read, remaining={}", rem);
 
                 if rem == 0 {
+                    *opt_remaining = Some(0);
+
                     // chunk of size 0 signals the end of the chunked stream
                     // if the 0 digit was missing from the stream, it would
                     // be an InvalidInput error instead.
@@ -120,6 +124,8 @@ fn eat<R: Reader>(rdr: &mut R, bytes: &[u8]) -> IoResult<()> {
 
 /// Chunked chunks start with 1*HEXDIGIT, indicating the size of the chunk.
 fn read_chunk_size<R: Reader>(rdr: &mut R) -> IoResult<uint> {
+    debug!("Read chunk size!");
+
     let mut size = 0u;
     let radix = 16;
     let mut in_ext = false;
